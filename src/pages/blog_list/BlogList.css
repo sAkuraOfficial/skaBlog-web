@@ -1,0 +1,58 @@
+.custom-list {
+  /* 可根据需要添加列表整体样式 */
+}
+
+.custom-card {
+  margin-bottom: 20px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  position: relative;
+  border-radius: 9px;
+  z-index: 0;
+  overflow: hidden;
+  padding: 3px;
+  max-height: 600px;
+  max-width: 600px;
+}
+
+.custom-card-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* 鼠标悬停时，卡片放大，并让伪元素出现顺时针流动的彩色边框 */
+.custom-card:hover {
+  transform: scale(1.05);
+  user-select: none;
+}
+
+.custom-card:hover::after {
+  content: "";
+  position: absolute;
+  top: -160px;
+  left: -160px;
+  right: -160px;
+  bottom: -160px;
+  z-index: -1;
+  border-radius: 3px;
+  background: conic-gradient(
+    red,
+    orange,
+    yellow,
+    green,
+    blue,
+    indigo,
+    violet,
+    red
+  );
+  animation: spinClockwise 3s linear infinite;
+}
+
+/* 顺时针旋转动画 */
+@keyframes spinClockwise {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

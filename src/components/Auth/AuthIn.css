@@ -1,0 +1,47 @@
+.auth-type-button-group {
+  display: grid;
+  /* 每行二列 */
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
+}
+
+.auth-card {
+  overflow: hidden;
+}
+
+.auth-divider {
+  margin: 20px 0;
+}
+
+.form {
+  /*垂直居中*/
+  display: flex;
+  flex-direction:column;
+  margin-bottom: 15px;
+}
+
+.form-title {
+  text-align: center;
+  margin-bottom: 10px;
+  margin-top: 0;
+  padding: 0;
+  font-size: 30px;
+}
+
+/*请设置.input-item类内的label表情的文字对齐方式*/
+.input-item label {
+  width: 5em;
+  justify-content: space-between;
+}
+
+.submit{
+  display: flex;
+  justify-content: center;
+}
+
+.submit-button {
+  width: 200px;
+  height: 50px;
+  padding: 0;
+  margin: 0;
+}

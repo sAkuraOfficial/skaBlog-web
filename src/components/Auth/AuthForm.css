@@ -1,0 +1,19 @@
+/* 修复输入框自动填充背景色问题 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  /* 使用足够长的过渡延迟，确保在用户整个会话期间生效 */
+  transition: background-color 5000s ease-in-out 0s !important;
+  /* 确保文字颜色与主题匹配 */
+  -webkit-text-fill-color: inherit !important;
+  /* 覆盖自动填充的背景色 */
+  box-shadow: 0 0 0 1000px transparent inset !important;
+}
+
+/* 针对 Ant Design 的 Input 组件进行特殊处理 */
+.ant-input-affix-wrapper > input:-webkit-autofill,
+.ant-input:-webkit-autofill {
+  background-color: transparent !important;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+}
