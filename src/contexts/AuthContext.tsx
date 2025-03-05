@@ -1,7 +1,6 @@
 import React, {createContext, useContext, useEffect, useState} from 'react';
-import {AccountInfo, AuthStatus} from '../types/auth';
+import {AccountInfo, AuthStatus, LoginResponse, RegisterResponse} from '../types/auth';
 import {authService} from '../services/auth_service';
-import {message} from 'antd';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -9,10 +8,12 @@ interface AuthContextType {
     username: string;
     roles: string[];
   } | null;
-  login: (credentials: AccountInfo) => Promise<void>;
+  login: (credentials: AccountInfo) => Promise<LoginResponse>; // 返回数据以便组件使用
   logout: () => void;
-  register: (credentials: AccountInfo) => Promise<void>;
+  register: (credentials: AccountInfo) => Promise<RegisterResponse>;
   status: AuthStatus;
+  error: string | null;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,8 +22,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<{ username: string; roles: string[] } | null>(null);
   const [status, setStatus] = useState<AuthStatus>('idle');
+  const [error, setError] = useState<string | null>(null);
 
-  // Check if user is already logged in on app initialization
+  // 清除错误信息
+  const clearError = () => setError(null);
+
+  // 检查用户是否已登录
   useEffect(() => {
     const token = localStorage.getItem('token');
     const username = localStorage.getItem('username');
@@ -35,9 +40,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
     }
   }, []);
 
-  const login = async (credentials: AccountInfo) => {
+  const login = async (credentials: AccountInfo): Promise<LoginResponse> => {
     try {
       setStatus('loading');
+      clearError();
       const response = await authService.login(credentials);
       setIsAuthenticated(true);
       setUser({
@@ -45,10 +51,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
         roles: response.roles
       });
       setStatus('success');
-      message.success(`欢迎回来, ${response.username}!`);
+      return response; // 返回响应，让组件显示成功消息
     } catch (error) {
       setStatus('error');
-      message.error('登录失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      const errorMessage = error instanceof Error
+        ? error.message
+        : '未知错误，请稍后重试';
+      setError(errorMessage);
       throw error;
     }
   };
@@ -57,31 +66,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
     authService.logout();
     setIsAuthenticated(false);
     setUser(null);
-    message.success('已成功注销');
+    setStatus('idle');
+    // 不再在这里调用 message.success
   };
 
   const register = async (credentials: AccountInfo) => {
     try {
       setStatus('loading');
-      await authService.register(credentials);
+      clearError();
+      const response = await authService.register(credentials);
       setStatus('reg_success');
-      message.success('注册成功，现在可以登录了');
+      return response; // 返回响应，让组件显示成功消息
     } catch (error) {
       setStatus('error');
-      message.error('注册失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      const errorMessage = error instanceof Error
+        ? error.message
+        : '注册失败，请稍后重试';
+      setError(errorMessage);
       throw error;
     }
   };
 
-  const value = {
+
+  const value: AuthContextType = {
     isAuthenticated,
     user,
     login,
     logout,
     register,
-    status
+    status,
+    error,
+    clearError
   };
 
+  //使用AccountInfo类型
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 

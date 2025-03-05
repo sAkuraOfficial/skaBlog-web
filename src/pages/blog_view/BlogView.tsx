@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { message } from 'antd';
 import { useParams } from 'react-router';
 import ReactMarkdown from 'react-markdown';
-import MarkNav from 'markdown-navbar';
+// import MarkNav from 'markdown-navbar';
 import remarkGfm from 'remark-gfm'
 import 'markdown-navbar/dist/navbar.css';
 // import './BlogView.css'; // optional css file for styling
@@ -36,9 +36,9 @@ function BlogView() {
         <p className="blog-date">{createdDate}</p>
       </header>
       <div className="blog-content-container">
-        <aside className="blog-nav">
-          <MarkNav source={content} ordered={false} />
-        </aside>
+        {/*<aside className="blog-nav">*/}
+        {/*  <MarkNav source={content} ordered={false} />*/}
+        {/*</aside>*/}
         <section className="blog-content">
           <ReactMarkdown remarkPlugins={[remarkGfm]} >
             {content}
