@@ -4,6 +4,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 // 扩展RequestInit类型来包含我们自定义的选项
 interface ApiRequestOptions extends RequestInit {
   skipAuth?: boolean; // 添加这个选项来控制是否跳过认证
+  skipHeader?: boolean; // 添加这个选项来控制是否跳过默认的headers
+  skipJson?: boolean; // 添加这个选项来控制是否跳过JSON解析
 }
 
 /**
@@ -14,18 +16,35 @@ export async function fetchApi<T>(endpoint: string, options: ApiRequestOptions =
   const url = `${API_BASE_URL}${endpoint}`;
 
   // 准备headers
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> || {}),
-  };
+  const headers: Record<string, string> =
+    options.skipHeader ?
+      {} :
+      options.skipJson ?
+        {
+          ...(options.headers as Record<string, string> || {}),
+        } :
+        {
+          'Content-Type': 'application/json',
+          ...(options.headers as Record<string, string> || {}),
+        };
 
   // 只有当skipAuth不为true时，才添加token
-  if (!options.skipAuth) {
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+  // if (!options.skipAuth || !options.skipHeader) {
+  //   const token = localStorage.getItem('token');
+  //   if (token) {
+  //     headers['Authorization'] = `Bearer ${token}`;
+  //   }
+  // }
+
+  if (!options.skipHeader) {
+    if (!options.skipAuth) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
     }
   }
+
 
   // 发送请求
   const response = await fetch(url, {
@@ -52,5 +71,6 @@ export async function fetchApi<T>(endpoint: string, options: ApiRequestOptions =
     throw new Error(typeof data === 'object' && data.message ? data.message : '请求失败');
   }
 
+  data['success'] = true;
   return data as T;
 }

@@ -100,7 +100,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
   };
 
   //使用AccountInfo类型
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+
 };
 
 export const useAuth = () => {

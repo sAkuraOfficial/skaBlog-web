@@ -11,14 +11,27 @@ export const postsService = {
    * 获取所有博客文章列表
    */
   getAllPosts: async (): Promise<BlogPost[]> => {
-    return await fetchApi<BlogPost[]>(API_BASE_PATH);
+    return await fetchApi<BlogPost[]>(
+      API_BASE_PATH,
+      {
+        skipHeader: true,
+        skipAuth: true,
+      }
+
+    );
   },
 
   /**
    * 获取单个博客文章详情
    */
   getPostById: async (id: number | string): Promise<BlogPost> => {
-    return await fetchApi<BlogPost>(`${API_BASE_PATH}/${id}`);
+    return await fetchApi<BlogPost>(
+      `${API_BASE_PATH}/${id}`,
+      {
+        skipHeader: true,
+        skipAuth: true,
+      }
+    );
   },
 
   /**
