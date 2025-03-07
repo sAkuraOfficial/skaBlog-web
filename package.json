@@ -10,6 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@bytemd/plugin-gfm": "^1.22.0",
+    "@bytemd/plugin-highlight": "^1.22.0",
+    "@bytemd/plugin-highlight-ssr": "^1.22.0",
+    "@bytemd/plugin-math": "^1.22.0",
+    "@bytemd/plugin-mermaid": "^1.22.0",
+    "@bytemd/react": "^1.22.0",
     "antd": "^5.24.1",
     "markdown-navbar": "^1.4.3",
     "react": "^19.0.0",

@@ -1,6 +1,6 @@
 import {useState, useEffect} from 'react';
 import {Button, Form, Input, Alert} from 'antd';
-import {AccountInfo} from '../../types/auth';
+import {AccountInfo, FetchResponse, LoginResponse} from '../../types/auth';
 import {useAuth} from '../../contexts/AuthContext';
 import './AuthForm.css';
 import {useMessage} from "../../contexts/MessageContext.tsx";
@@ -29,12 +29,12 @@ function AuthForm({
     setLoading(true);
     try {
       if (isFormTypeLogin) {
-        const response = await login(values);
+        const response: FetchResponse<LoginResponse> = await login(values);
         onClose(); // 登录成功后关闭弹窗
         await messageApi.open(
           {
             type: 'success',
-            content: `欢迎回来, ${response.username}!`
+            content: `欢迎回来, ${response.data?.username}!`
           }
         );
       } else {

@@ -89,8 +89,8 @@ const BlogList: React.FC = () => {
     e.stopPropagation();
 
     try {
-      const response = await postsService.deletePost(id);
 
+      const response = await postsService.deletePost(id);
       if (response.success) {
         messageApi.success('删除成功');
         // Trigger re-fetch by toggling refreshTrigger

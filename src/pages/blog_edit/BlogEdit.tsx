@@ -1,8 +1,30 @@
-import React, {useEffect, useState, useRef} from 'react';
-import {Button, Input, message} from 'antd';
-import Vditor from 'vditor';
-import 'vditor/dist/index.css';
-import {useNavigate, useParams} from 'react-router';
+import React, {useEffect, useState} from 'react';
+import {Button, Input, Spin} from 'antd';
+import {Editor} from '@bytemd/react';
+import gfm from '@bytemd/plugin-gfm';
+import highlight from '@bytemd/plugin-highlight';
+import math from "@bytemd/plugin-math";
+import 'highlight.js/styles/default.css'//代码高亮css
+import 'katex/dist/katex.css'; //数学公式css
+import './BlogEdit.css';
+import mermaid from '@bytemd/plugin-mermaid';
+import 'bytemd/dist/index.css';
+import {useNavigate, useParams} from 'react-router-dom';
+
+
+// Import your new services and contexts
+import {postsService} from '../../services/posts_service';
+import {useMessage} from '../../contexts/MessageContext';
+import {CreateUpdatePostRequest} from '../../types/post';
+
+// ByteMD plugins
+const plugins = [
+  highlight(),
+  gfm(),
+  mermaid(),
+  math()
+  // Add more plugins as needed
+];
 
 interface BlogEditProps {
   isCreate: boolean;
@@ -12,109 +34,114 @@ const BlogEdit: React.FC<BlogEditProps> = ({isCreate}) => {
   const {id} = useParams<{ id: string }>();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [messageApi, contextHolder] = message.useMessage();
-  const vditorRef = useRef<Vditor | null>(null);
+  const [loading, setLoading] = useState(!isCreate);
   const navigate = useNavigate();
+  const messageApi = useMessage();
 
   useEffect(() => {
     if (!isCreate && id) {
-      fetch(`http://localhost:8080/api/blog/posts/${id}`, {
-        method: 'GET',
-      })
-        .then(response => response.json())
-        .then(data => {
-          setTitle(data.title);
-          setContent(data.content);
-          if (vditorRef.current) {
-            vditorRef.current.setValue(data.content);
-          }
-        })
-        .catch(error => {
-          console.error('获取博客信息失败', error);
-          message.error('获取博客信息失败');
-        });
-    }
-  }, [isCreate, id]);
-
-  useEffect(() => {
-    const vditor = new Vditor('vditor', {
-      height: 500,
-      toolbarConfig: {
-        pin: true,
-      },
-      cache: {
-        id: 'vditor',
-        enable: true,
-      },
-      after: () => {
-        console.log('Vditor is ready');
-        if (content) {
-          vditor.setValue(content);
+      const fetchPost = async () => {
+        try {
+          setLoading(true);
+          const post = await postsService.getPostById(id);
+          setTitle(post.title);
+          setContent(post.content);
+        } catch (error) {
+          console.error('Failed to fetch post:', error);
+          messageApi.error('获取博客信息失败');
+        } finally {
+          setLoading(false);
         }
-      },
-      input: (value) => {
-        setContent(value);
-      }
-    });
+      };
 
-    vditorRef.current = vditor;
-
-    // Cleanup Vditor on component unmount
-    return () => {
-      vditor.destroy();
-    };
-  }, []);
+      fetchPost();
+    }
+  }, [isCreate, id, messageApi]);
 
   const handleSubmit = async () => {
-    const editorContent = vditorRef.current?.getValue() || '';
-    const url = isCreate ? 'http://localhost:8080/api/blog/posts' : `http://localhost:8080/api/blog/posts/${id}`;
-    const method = isCreate ? 'POST' : 'PUT';
+    // Validate input
+    if (!title.trim()) {
+      messageApi.warning('请输入文章标题');
+      return;
+    }
 
-    const response = await fetch(url, {
-      method: method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        title: title,
-        content: editorContent,
-      }),
-    });
+    const postData: CreateUpdatePostRequest = {
+      title,
+      content
+    };
 
-    if (response.ok) {
-      await messageApi.open({
-        type: 'success',
-        content: isCreate ? '博客创建成功 3s后回到首页' : '博客更新成功 3s后回到首页',
-      });
-      if (isCreate) {
-        setTitle('');
-        setContent('');
-        vditorRef.current?.setValue(''); // 清空内容
+    try {
+      setLoading(true);
+      const response = isCreate
+        ? await postsService.createPost(postData)
+        : await postsService.updatePost(id!, postData);
+
+      if (response.success) {
+        messageApi.success(`博客${isCreate ? '创建' : '更新'}成功 3s后回到首页`);
+
+        if (isCreate) {
+          setTitle('');
+          setContent('');
+        }
+
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
+      } else {
+        messageApi.error(`博客${isCreate ? '创建' : '更新'}失败: ${response.message}`);
       }
-      navigate('/');
-    } else {
-      messageApi.open({
-        type: 'error',
-        content: isCreate ? '博客创建失败' : '博客更新失败',
-      });
-
+    } catch (error) {
+      console.error(`Failed to ${isCreate ? 'create' : 'update'} post:`, error);
+      messageApi.error(`博客${isCreate ? '创建' : '更新'}失败`);
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh'}}>
+        <Spin size="large" tip="加载中..."/>
+      </div>
+    );
+  }
+
   return (
-    <>
-      {contextHolder}
+    <div className="blog-edit-container" style={{maxWidth: '1200px', margin: '0 auto', padding: '20px'}}>
       <Input
         placeholder="请输入文章标题"
-        style={{marginBottom: 10}}
+        style={{marginBottom: 20, fontSize: '18px'}}
         value={title}
         onChange={e => setTitle(e.target.value)}
+        size="large"
       />
-      <div id="vditor" style={{marginBottom: 20}}/>
-      <Button type="primary" onClick={handleSubmit}>
-        {isCreate ? '创建' : '更新'}
-      </Button>
-    </>
+
+      <div style={{border: '1px solid #d9d9d9', borderRadius: '4px', marginBottom: 20}}>
+        <Editor
+          value={content}
+          plugins={plugins}
+          onChange={setContent}
+        />
+      </div>
+
+      <div style={{marginTop: 20}}>
+        <Button
+          type="primary"
+          onClick={handleSubmit}
+          size="large"
+          loading={loading}
+        >
+          {isCreate ? '创建' : '更新'}
+        </Button>
+        <Button
+          style={{marginLeft: 10}}
+          onClick={() => navigate('/')}
+          size="large"
+        >
+          取消
+        </Button>
+      </div>
+    </div>
   );
 };
 

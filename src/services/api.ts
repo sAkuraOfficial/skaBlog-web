@@ -1,76 +1,40 @@
-// Vite 项目中访问环境变量的方式
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-// 扩展RequestInit类型来包含我们自定义的选项
 interface ApiRequestOptions extends RequestInit {
-  skipAuth?: boolean; // 添加这个选项来控制是否跳过认证
-  skipHeader?: boolean; // 添加这个选项来控制是否跳过默认的headers
-  skipJson?: boolean; // 添加这个选项来控制是否跳过JSON解析
+  skipAuth?: boolean;
 }
 
-/**
- * 带认证控制的API请求函数
- */
-export async function fetchApi<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-  // 构造URL
+export interface ApiResult<T = any> {
+  success: boolean;
+  value?: T;
+  error?: string;
+}
+
+export async function fetchApi<T = any>(endpoint: string, options: ApiRequestOptions = {}): Promise<ApiResult<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> || {}),
+  };
 
-  // 准备headers
-  const headers: Record<string, string> =
-    options.skipHeader ?
-      {} :
-      options.skipJson ?
-        {
-          ...(options.headers as Record<string, string> || {}),
-        } :
-        {
-          'Content-Type': 'application/json',
-          ...(options.headers as Record<string, string> || {}),
-        };
-
-  // 只有当skipAuth不为true时，才添加token
-  // if (!options.skipAuth || !options.skipHeader) {
-  //   const token = localStorage.getItem('token');
-  //   if (token) {
-  //     headers['Authorization'] = `Bearer ${token}`;
-  //   }
-  // }
-
-  if (!options.skipHeader) {
-    if (!options.skipAuth) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+  if (!options.skipAuth) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
   }
 
-
-  // 发送请求
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  // 检查是否是JSON响应
-  const contentType = response.headers.get('content-type');
-  let data;
-  if (contentType && contentType.includes('application/json')) {
-    data = await response.json();
-  } else {
-    data = await response.text();
-  }
-
-  // 处理错误
-  if (!response.ok) {
-    if (response.status === 401 && !options.skipAuth) {
-      // 可选：处理未授权错误
-      // localStorage.removeItem('token');
-      // window.location.href = '/login';
+  try {
+    const response = await fetch(url, {...options, headers});
+    if (response.ok) {
+      const contentType = response.headers.get('content-type');
+      const data = contentType && contentType.includes('application/json') ? await response.json() : undefined;
+      return {success: true, value: data};
+    } else {
+      const errorData = await response.json();
+      return {success: false, error: errorData.message || '请求失败'};
     }
-    throw new Error(typeof data === 'object' && data.message ? data.message : '请求失败');
+  } catch (error) {
+    return {success: false, error: error instanceof Error ? error.message : '请求失败'};
   }
-
-  data['success'] = true;
-  return data as T;
 }

@@ -17,4 +17,11 @@ export interface RegisterResponse {
   message: string;
 }
 
+export interface FetchResponse<T> {
+  success: boolean;
+//   data可以是LoginResponse/RegisterResponse，使用泛型
+  data: T | null;
+  error: string | null;
+}
+
 export type AuthStatus = 'idle' | 'loading' | 'success' | 'error' | 'reg_success';

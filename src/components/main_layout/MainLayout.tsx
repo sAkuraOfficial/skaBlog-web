@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Layout, Menu, Button, Modal, Avatar} from 'antd';
+import {Layout, Menu, Button, Modal, Avatar, MenuProps, Dropdown, Space} from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -8,7 +8,10 @@ import {
   LoginOutlined,
   LogoutOutlined,
   SunOutlined,
-  MoonOutlined
+  MoonOutlined,
+  DownOutlined,
+  SettingOutlined,
+  HomeOutlined
 } from '@ant-design/icons';
 import {useNavigate, Routes, Route} from 'react-router';
 import BlogEdit from '../../pages/blog_edit/BlogEdit.tsx';
@@ -69,6 +72,43 @@ const MainLayout: React.FC<{
     )
   }
 
+  const items: MenuProps['items'] = [
+    {
+      key: '1',
+      label: <span>{user?.username}</span>,
+      onClick: () => {
+
+      }
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: '2',
+      label: '主页',
+      icon: <HomeOutlined/>,
+      onClick: () => {
+        navigate('/');
+      }
+    },
+    {
+      key: '3',
+      label: '设置',
+      icon: <SettingOutlined/>,
+      onClick: () => {
+
+      }
+    },
+    {
+      key: '4',
+      label: '注销账户',
+      icon: <LogoutOutlined/>,
+      onClick: () => {
+        handleLogout();
+      }
+    },
+  ];
+
   return (
     <Layout style={{minHeight: '100vh'}}>
       {
@@ -117,12 +157,21 @@ const MainLayout: React.FC<{
             {
               isAuthenticated ?
                 <>
-                  <Button className={"logout-button"} type="primary" onClick={handleLogout}>
-                    <LogoutOutlined/>
-                    注销
-                  </Button>
-                  <Avatar className={"avatar"} size={32} src={logo}/>
-                  <span className="username">{user?.username}</span>
+                  {/*注销按钮，已经在头像菜单里集成了，不要了*/}
+                  {/*<Button className={"logout-button"} type="primary" onClick={handleLogout}>*/}
+                  {/*  <LogoutOutlined/>*/}
+                  {/*  注销*/}
+                  {/*</Button>*/}
+
+                  <Dropdown menu={{items}}>
+                    <a onClick={(e) => e.preventDefault()}>
+                      <Space>
+                        <Avatar className={"avatar"} size={32} src={logo}/>
+                        {user?.username}
+                        <DownOutlined/>
+                      </Space>
+                    </a>
+                  </Dropdown>
                 </>
                 :
                 <>

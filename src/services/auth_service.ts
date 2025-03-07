@@ -1,50 +1,43 @@
-import {fetchApi} from './api';
-import {AccountInfo, LoginResponse, RegisterResponse} from '../types/auth';
+import { ApiResult, fetchApi } from './api';
+import { AccountInfo, FetchResponse, LoginResponse, RegisterResponse } from '../types/auth';
 
-/**
- * 认证相关服务
- */
 export const authService = {
-  /**
-   * 用户登录
-   */
-  login: async (credentials: AccountInfo): Promise<LoginResponse> => {
-    const data = await fetchApi<LoginResponse>('/auth/login', {
+  login: async (credentials: AccountInfo): Promise<FetchResponse<LoginResponse>> => {
+    const result: ApiResult<LoginResponse> = await fetchApi('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
-      skipAuth: true // 明确指定跳过添加token
+      skipAuth: true,
     });
 
-    // 登录成功后存储用户信息
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('username', data.username);
-    localStorage.setItem('roles', data.roles.join(','));
+    if (result.success && result.value) {
+      localStorage.setItem('token', result.value.token);
+      localStorage.setItem('username', result.value.username);
+      localStorage.setItem('roles', result.value.roles.join(','));
+    }
 
-    return data;
+    return {
+      success: result.success,
+      data: result.value,
+      error: result.error,
+    };
   },
 
-  /**
-   * 用户注册
-   */
-  register: async (credentials: AccountInfo): Promise<RegisterResponse> => {
-    return await fetchApi<RegisterResponse>('/auth/register', {
+  register: async (credentials: AccountInfo): Promise<FetchResponse<RegisterResponse>> => {
+    const result = await fetchApi<RegisterResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(credentials),
-      skipAuth: true // 明确指定跳过添加token
+      skipAuth: true,
     });
+
+    return {
+      success: result.success,
+      data: result.value,
+      error: result.error,
+    };
   },
 
-  /**
-   * 注销登录
-   */
   logout: (): void => {
-    // 可以选择调用注销API
-    fetchApi('/auth/logout', {
-      method: 'POST',
-      // 这里不使用skipAuth，因为注销需要验证身份
-    }).catch(err => console.error('注销失败', err));
-
-    // 清除本地存储
+    fetchApi('/auth/logout', { method: 'POST' }).catch(err => console.error('注销失败', err));
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     localStorage.removeItem('roles');
